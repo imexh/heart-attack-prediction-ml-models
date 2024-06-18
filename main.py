@@ -2,6 +2,7 @@ import pandas as pd
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -23,15 +24,14 @@ def calculateMortality():
     if inp is None:
         return jsonify({"error": "Data parameter is missing"}), 400
 
-    inp = [int(float(num)) if float(num).is_integer() else float(num) for num in inp.split(',')]
-
-    columns = ['Age', 'Anaemia', 'Diabetes', 'Bloob Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
+    columns = ['Age', 'Anaemia', 'Diabetes', 'Blood Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
                'Platelets', 'Serum Creatinine', 'Serum Sodium']
-    df = pd.DataFrame([inp], columns=columns)
+
+    input_array = inp.split(',')
 
     try:
         # probability = mortality_model.predict(df)[0][0]
-        return jsonify({"mortality": 5})
+        return jsonify({"mortality": getMortality(input_array)})
     except:
         print("Caught model errors!!!")
         return jsonify({"probability": 0.0})
@@ -44,15 +44,14 @@ def calculateLengthOfStay():
     if inp is None:
         return jsonify({"error": "Data parameter is missing"}), 400
 
-    inp = [int(float(num)) if float(num).is_integer() else float(num) for num in inp.split(',')]
-
-    columns = ['Age', 'Anaemia', 'Diabetes', 'Bloob Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
+    columns = ['Age', 'Anaemia', 'Diabetes', 'Blood Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
                'Platelets', 'Serum Creatinine', 'Serum Sodium']
-    df = pd.DataFrame([inp], columns=columns)
+
+    input_array = inp.split(',')
 
     try:
         # probability = los_model.predict(df)[0][0]
-        return jsonify({"length_of_stay": 1})
+        return jsonify({"los": getLos(input_array)})
     except:
         print("Caught model errors!!!")
         return jsonify({"probability": 0.0})
@@ -65,18 +64,66 @@ def calculateReadmission():
     if inp is None:
         return jsonify({"error": "Data parameter is missing"}), 400
 
-    inp = [int(float(num)) if float(num).is_integer() else float(num) for num in inp.split(',')]
-
-    columns = ['Age', 'Anaemia', 'Diabetes', 'Bloob Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
+    columns = ['Age', 'Anaemia', 'Diabetes', 'Blood Pressure', "Sex", "Smoking", 'Creatinine', 'Ejection Fraction',
                'Platelets', 'Serum Creatinine', 'Serum Sodium']
-    df = pd.DataFrame([inp], columns=columns)
+
+    input_array = inp.split(',')
 
     try:
         # probability = readmission_model.predict(df)[0][0]
-        return jsonify({"readmission": 0})
+        return jsonify({"readmission": getReadmission(input_array)})
     except:
         print("Caught model errors!!!")
         return jsonify({"probability": 0.0})
+
+
+def getReadmission(input):
+    yesCount = 0
+
+    for value in input:
+        if value == 'Yes':
+            yesCount += 1
+
+    if yesCount == 4:
+        return 0
+    elif int(input[10]) < 125:
+        return 0
+    else:
+        return 1
+
+
+def getMortality(input):
+    yesCount = 0
+
+    for value in input:
+        if value == 'Yes':
+            yesCount += 1
+
+    if yesCount >= 3:
+        return 1
+    else:
+        return 0
+
+
+def getLos(input):
+    age = int(input[0])
+
+    if age <= 25:
+        return getRandomNumberBetween(1, 5)
+    elif age <= 30:
+        return getRandomNumberBetween(3, 9)
+    elif age <= 40:
+        return getRandomNumberBetween(6, 12)
+    elif age <= 50:
+        return getRandomNumberBetween(7, 18)
+    elif age <= 60:
+        return getRandomNumberBetween(10, 20)
+    else:
+        return getRandomNumberBetween(15, 30)
+
+
+def getRandomNumberBetween(a, b):
+    return random.randint(a, b)
 
 
 # TODO: Comment this when running the main
